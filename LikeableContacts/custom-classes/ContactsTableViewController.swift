@@ -25,7 +25,7 @@ class ContactsTableViewController: UITableViewController {
         // self.navigationItem.rightBarButtonItem = self.editButtonItem()
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         //self.clearContacts()
         retreiveFromStore()
         self.tableView.reloadData()
@@ -38,30 +38,30 @@ class ContactsTableViewController: UITableViewController {
 
     // MARK: - Table view data source
 
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return contacts.isEmpty ? 0 : contacts.count
     }
 
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cellIdentifier = "ContactCell"
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! ContactTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as! ContactTableViewCell
 
         let contact = contacts[indexPath.row]
         
         cell.firstNameLabel.text = contact.birthName
         cell.secondNameLabel.text = contact.middleName
-        cell.likeLabel.text = contact.likes == nil ? "No likes" : String(contact.likes!)
+        cell.likeLabel.text = contact.likes == nil ? "No likes" : String(describing: contact.likes!)
 
         return cell
     }
  
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
     }
     
     //MARK: -Contacts
@@ -70,17 +70,17 @@ class ContactsTableViewController: UITableViewController {
         AppDelegate.getAppDelegate().requestForAccess {
             (accessGranted) -> Void in
             if accessGranted {
-                let keys = [CNContactFormatter.descriptorForRequiredKeysForStyle(CNContactFormatterStyle.FullName)]
+                let keys = [CNContactFormatter.descriptorForRequiredKeys(for: CNContactFormatterStyle.fullName)]
                 do {
-                    let predicate: NSPredicate = CNContact.predicateForContactsInContainerWithIdentifier(CNContactStore().defaultContainerIdentifier())
-                    let contacts = try CNContactStore().unifiedContactsMatchingPredicate(predicate, keysToFetch: keys)
+                    let predicate: NSPredicate = CNContact.predicateForContactsInContainer(withIdentifier: CNContactStore().defaultContainerIdentifier())
+                    let contacts = try CNContactStore().unifiedContacts(matching: predicate, keysToFetch: keys)
                     
                     self.clearContacts()
                     
                     let context = AppDelegate.getAppDelegate().managedObjectContext
                     
                     for contact in contacts {
-                        let likeableContact = NSEntityDescription.insertNewObjectForEntityForName("LikeableContact", inManagedObjectContext: context) as! LikeableContact
+                        let likeableContact = NSEntityDescription.insertNewObject(forEntityName: "LikeableContact", into: context) as! LikeableContact
                         likeableContact.birthName = contact.givenName
                         likeableContact.middleName = contact.middleName
                         likeableContact.likes = 0
@@ -94,7 +94,7 @@ class ContactsTableViewController: UITableViewController {
                     }
                     
                                         
-                    dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    DispatchQueue.main.async(execute: { () -> Void in
                         self.retreiveFromStore()
                         self.tableView.reloadData()
                     })
@@ -111,7 +111,7 @@ class ContactsTableViewController: UITableViewController {
     func clearContacts() {
         let context = AppDelegate.getAppDelegate().managedObjectContext
         for lc in contacts {
-            context.deleteObject(lc)
+            context.delete(lc)
         }
         
         do {
@@ -123,18 +123,18 @@ class ContactsTableViewController: UITableViewController {
     
     func retreiveFromStore() {
         let context = AppDelegate.getAppDelegate().managedObjectContext
-        let fetchRequest = NSFetchRequest(entityName: "LikeableContact")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "LikeableContact")
         do {
-            contacts = try context.executeFetchRequest(fetchRequest) as! [LikeableContact]
+            contacts = try context.fetch(fetchRequest) as! [LikeableContact]
         } catch {
             print(error)
         }
     }
     
-    func updateValueInStore(hashValue: Int, increment: Int) -> LikeableContact? {
+    func updateValueInStore(_ hashValue: Int, increment: Int) -> LikeableContact? {
         for contact in contacts {
             if contact.hashValue == hashValue && contact.likes != nil {
-                contact.likes = NSNumber(int: contact.likes!.intValue + increment)
+                contact.likes = NSNumber(value: contact.likes!.int32Value + increment as Int32)
                 let context = AppDelegate.getAppDelegate().managedObjectContext
                 do {
                     try context.save()
@@ -147,21 +147,21 @@ class ContactsTableViewController: UITableViewController {
         return nil
     }
     
-    func getIndexPathBy(button: UIButton) -> NSIndexPath {
-        let buttonPosition = button.convertPoint(CGPointZero, toView: self.tableView)
-        return self.tableView.indexPathForRowAtPoint(buttonPosition)!
+    func getIndexPathBy(_ button: UIButton) -> IndexPath {
+        let buttonPosition = button.convert(CGPoint.zero, to: self.tableView)
+        return self.tableView.indexPathForRow(at: buttonPosition)!
     }
     
-    func updateContactBy(button: UIButton, increment: Int) {
+    func updateContactBy(_ button: UIButton, increment: Int) {
         let indexPath = getIndexPathBy(button)
-        let cell = tableView.cellForRowAtIndexPath(indexPath) as! ContactTableViewCell
+        let cell = tableView.cellForRow(at: indexPath) as! ContactTableViewCell
         
         var hashString = ""
         if let firstName = cell.firstNameLabel.text {
-            hashString.appendContentsOf(firstName)
+            hashString.append(firstName)
         }
         if let secondName = cell.secondNameLabel.text {
-            hashString.appendContentsOf(secondName)
+            hashString.append(secondName)
         }
         //updateValue
         let updatedValue = updateValueInStore(hashString.hashValue, increment: increment)
@@ -172,23 +172,23 @@ class ContactsTableViewController: UITableViewController {
 
     }
     
-    func getCounterCoordinates(button: UIButton) -> CGRect{
-        let cell = tableView.cellForRowAtIndexPath(getIndexPathBy(button)) as! ContactTableViewCell
+    func getCounterCoordinates(_ button: UIButton) -> CGRect{
+        let cell = tableView.cellForRow(at: getIndexPathBy(button)) as! ContactTableViewCell
         return cell.likeLabel.frame
     }
     
-    func makeAnAnimation(button: UIButton, color: UIColor) {
+    func makeAnAnimation(_ button: UIButton, color: UIColor) {
         let viewForAnimation =  UIView(frame: button.bounds)
-        viewForAnimation.layer.cornerRadius = CGRectGetHeight(viewForAnimation.bounds) / 2
+        viewForAnimation.layer.cornerRadius = viewForAnimation.bounds.height / 2
         viewForAnimation.backgroundColor = color
         viewForAnimation.alpha = 0.5
         button.addSubview(viewForAnimation)
         
-        UIView.animateWithDuration(0.5, delay: 0, options: .CurveEaseIn, animations: {
+        UIView.animate(withDuration: 0.5, delay: 0, options: .curveEaseIn, animations: {
             var transform = viewForAnimation.transform
             let dx = self.getCounterCoordinates(button).midX - button.frame.midX
-            transform = CGAffineTransformTranslate(transform, dx, 0)
-            transform = CGAffineTransformScale(transform, 0.1, 0.1)
+            transform = transform.translatedBy(x: dx, y: 0)
+            transform = transform.scaledBy(x: 0.1, y: 0.1)
             viewForAnimation.transform = transform
             }, completion: {
                 result -> Void in
@@ -199,18 +199,18 @@ class ContactsTableViewController: UITableViewController {
     
     //MARK: - Actions
     
-    @IBAction func actionLikeButtonPressed(sender: UIButton) {
+    @IBAction func actionLikeButtonPressed(_ sender: UIButton) {
         updateContactBy(sender, increment: 1)
         
         //animation
-        makeAnAnimation(sender, color: .redColor())
+        makeAnAnimation(sender, color: .red)
     }
     
-    @IBAction func actionDislikeButtonPressed(sender: UIButton) {
+    @IBAction func actionDislikeButtonPressed(_ sender: UIButton) {
         updateContactBy(sender, increment: -1)
         
         //animation
-        makeAnAnimation(sender, color: .blueColor())
+        makeAnAnimation(sender, color: .blue)
     }
     
     @IBAction func actionUpdateContacts() {

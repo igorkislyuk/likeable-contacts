@@ -15,10 +15,10 @@ class LikeableContact: NSManagedObject {
     override var hashValue: Int {
         var result = ""
         if let firstName = birthName {
-            result.appendContentsOf(firstName)
+            result.append(firstName)
         }
         if let secondName = middleName {
-            result.appendContentsOf(secondName)
+            result.append(secondName)
         }
         
         return result.hashValue

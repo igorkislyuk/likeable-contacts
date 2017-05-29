@@ -112,6 +112,7 @@
 					00B7D8BB1CE440D90071BED6 = {
 						CreatedOnToolsVersion = 7.3.1;
 						DevelopmentTeam = 6A9JBX5798;
+						LastSwiftMigration = 0830;
 					};
 				};
 			};
@@ -278,6 +279,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.companyname.LikeableContacts;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -293,6 +295,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.companyname.LikeableContacts;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
